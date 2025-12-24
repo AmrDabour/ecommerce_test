@@ -1,0 +1,94 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: ecommerce_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ecommerce_db}
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d ${DB_NAME:-ecommerce_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce_network
+
+  # Admin Dashboard Service
+  admin:
+    build:
+      context: ./services
+      dockerfile: admin/Dockerfile
+    container_name: ecommerce_admin
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-admin}
+      DB_NAME: ${DB_NAME:-ecommerce_db}
+      DB_PORT: 5432
+    volumes:
+      - ./services/admin/app:/app
+      - ./services/shared:/app/services/shared
+    networks:
+      - ecommerce_network
+
+  # API Service
+  api:
+    build:
+      context: ./services
+      dockerfile: api/Dockerfile
+    container_name: ecommerce_api
+    restart: always
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:-admin}
+      DB_NAME: ${DB_NAME:-ecommerce_db}
+      DB_PORT: 5432
+    volumes:
+      - ./services/api/app:/app
+      - ./services/shared:/app/services/shared
+    networks:
+      - ecommerce_network
+
+  # Adminer - Database Management Tool
+  adminer:
+    image: adminer:latest
+    container_name: ecommerce_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    networks:
+      - ecommerce_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  ecommerce_network:
+    driver: bridge
+
