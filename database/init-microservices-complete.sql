@@ -25,6 +25,15 @@ CREATE DATABASE product_db;
 -- Create Order Service Database
 CREATE DATABASE order_db;
 
+-- Create Payment Service Database
+CREATE DATABASE payment_db;
+
+-- Create Shipping Service Database
+CREATE DATABASE shipping_db;
+
+-- Create Notification Service Database
+CREATE DATABASE notification_db;
+
 -- Create Admin Service Database
 CREATE DATABASE admin_db;
 
@@ -43,6 +52,18 @@ GRANT ALL PRIVILEGES ON DATABASE product_db TO product_service;
 -- Order Service User
 CREATE USER order_service WITH PASSWORD 'order_secure_pass_012!';
 GRANT ALL PRIVILEGES ON DATABASE order_db TO order_service;
+
+-- Payment Service User
+CREATE USER payment_service WITH PASSWORD 'payment_secure_pass_111!';
+GRANT ALL PRIVILEGES ON DATABASE payment_db TO payment_service;
+
+-- Shipping Service User
+CREATE USER shipping_service WITH PASSWORD 'shipping_secure_pass_222!';
+GRANT ALL PRIVILEGES ON DATABASE shipping_db TO shipping_service;
+
+-- Notification Service User
+CREATE USER notification_service WITH PASSWORD 'notification_secure_pass_333!';
+GRANT ALL PRIVILEGES ON DATABASE notification_db TO notification_service;
 
 -- Admin Service User (read-only access to all databases for reporting)
 CREATE USER admin_service WITH PASSWORD 'admin_secure_pass_456!';
@@ -1082,6 +1103,33 @@ ON CONFLICT (slug) DO NOTHING;
 GRANT ALL PRIVILEGES ON SCHEMA public TO order_service;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO order_service;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO order_service;
+
+-- ====================================
+-- CONNECT TO PAYMENT DATABASE
+-- ====================================
+\c payment_db;
+
+GRANT ALL PRIVILEGES ON SCHEMA public TO payment_service;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO payment_service;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO payment_service;
+
+-- ====================================
+-- CONNECT TO SHIPPING DATABASE
+-- ====================================
+\c shipping_db;
+
+GRANT ALL PRIVILEGES ON SCHEMA public TO shipping_service;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO shipping_service;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO shipping_service;
+
+-- ====================================
+-- CONNECT TO NOTIFICATION DATABASE
+-- ====================================
+\c notification_db;
+
+GRANT ALL PRIVILEGES ON SCHEMA public TO notification_service;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO notification_service;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO notification_service;
 
 -- ==========================================
 -- ORDER SERVICE TABLES

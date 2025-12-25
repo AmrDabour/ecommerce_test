@@ -10,7 +10,11 @@
       "Bash(docker exec:*)",
       "Bash(test:*)",
       "Bash(docker cp:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(wc:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(docker-compose exec:*)"
     ]
   }
 }

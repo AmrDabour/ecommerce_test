@@ -1,31 +1,23 @@
-# Order Service Dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    gcc \
     postgresql-client \
-    curl \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy shared models first (from services/shared)
-COPY shared /app/services/shared
-
-# Copy requirements and install dependencies
-COPY order/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
-COPY order/app /app
+COPY app/ .
 
-# Expose port
+RUN mkdir -p media staticfiles
+
 EXPOSE 8004
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8004/health || exit 1
+# Copy startup script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
-# Run the application
-CMD ["python", "main.py"]
+CMD ["/start.sh"]
