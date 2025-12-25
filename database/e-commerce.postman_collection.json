@@ -1,0 +1,328 @@
+{
+	"info": {
+		"_postman_id": "bd9614d6-4bb0-46cf-b800-a4fae128b77f",
+		"name": "e-commerce",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "29282861",
+		"_collection_link": "https://qr-team-5966.postman.co/workspace/QR-team~e3893bd9-37bc-48a3-8f11-28e28aabbea1/collection/29282861-bd9614d6-4bb0-46cf-b800-a4fae128b77f?action=share&source=collection_link&creator=29282861"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "reset_password",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "email",
+									"value": "sisile6164@2200freefonts.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "12345678",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url_online}}auth/users/reset_password/",
+							"host": [
+								"{{url_online}}auth"
+							],
+							"path": [
+								"users",
+								"reset_password",
+								""
+							],
+							"query": [
+								{
+									"key": "ema",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset_password_confirm",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "uid",
+									"value": "Ng",
+									"type": "text"
+								},
+								{
+									"key": "token",
+									"value": "d18o1f-e6df3d633a9d1d00a7636c8b56ed5c94",
+									"type": "text"
+								},
+								{
+									"key": "new_password",
+									"value": "K12345678k",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url_online}}auth/users/reset_password_confirm/",
+							"host": [
+								"{{url_online}}auth"
+							],
+							"path": [
+								"users",
+								"reset_password_confirm",
+								""
+							],
+							"query": [
+								{
+									"key": "ema",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "register",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"sisile6164@2200freefonts.com\",\r\n  \"password\": \"K12345678k\",\r\n  \"re_password\": \"K12345678k\"\r\n}"
+						},
+						"url": {
+							"raw": "{{url_online}}auth/users/",
+							"host": [
+								"{{url_online}}auth"
+							],
+							"path": [
+								"users",
+								""
+							],
+							"query": [
+								{
+									"key": "ema",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "activation",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "uid",
+									"value": "Ng",
+									"type": "text"
+								},
+								{
+									"key": "token",
+									"value": "d18nlu-d8868815327774b0ff4ece87b8ce0fa1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url_online}}auth/users/activation/",
+							"host": [
+								"{{url_online}}auth"
+							],
+							"path": [
+								"users",
+								"activation",
+								""
+							],
+							"query": [
+								{
+									"key": "ema",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "email",
+									"value": "sisile6164@2200freefonts.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "K12345678k",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url_online}}auth/jwt/create/",
+							"host": [
+								"{{url_online}}auth"
+							],
+							"path": [
+								"jwt",
+								"create",
+								""
+							],
+							"query": [
+								{
+									"key": "email",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "get_my_profile",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "update-my-profile",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "first_name",
+						"value": "karim",
+						"type": "text"
+					},
+					{
+						"key": "last_name",
+						"value": "salim",
+						"type": "text"
+					}
+				],
+				"url": "http://127.0.0.1:8000/api/v1/auth/users/5/"
+			},
+			"response": []
+		},
+		{
+			"name": "apply-to-vendor",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "business_name",
+							"value": "متجري الرائع",
+							"type": "text"
+						},
+						{
+							"key": "business_description",
+							"value": "أبيع منتجات رائعة",
+							"type": "text"
+						},
+						{
+							"key": "business_email",
+							"value": "business@example.com",
+							"type": "text"
+						},
+						{
+							"key": "business_country",
+							"value": "مصر",
+							"type": "text"
+						}
+					]
+				},
+				"url": "{{url_online}}accounts/vendors/apply/"
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": {
+			"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY2NDQ3ODAzLCJpYXQiOjE3NjY0NDQyMDMsImp0aSI6IjY4MmM0ZWZiMjVhOTRmMTc5YjY5NzY1ZGIxYWMxMDNhIiwidXNlcl9pZCI6IjYifQ.U7qONYJNc73P6AP5Q6WwWOB0tDVZgMrul4hNjOOrURg"
+		}
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url_online",
+			"value": ""
+		}
+	]
+}

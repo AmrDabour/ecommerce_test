@@ -19,8 +19,8 @@ if not os.path.exists(shared_path):
 sys.path.insert(0, shared_path)
 
 from models import (
-    User, Category, Product, ProductImage, Order, OrderItem,
-    Payment, Address, Review, CartItem, Wishlist, Message, 
+    User, Category, Brand, Product, ProductImage, Order, OrderItem,
+    Payment, Address, Review, Cart, CartItem, Wishlist, Message, 
     Coupon, Notification
 )
 
@@ -64,7 +64,7 @@ class UserAdmin(ModelView, model=User):
 
 class ProductAdmin(ModelView, model=Product):
     column_list = [Product.id, Product.title, Product.price, Product.quantity, 
-                   Product.status, Product.approval_status, Product.seller_id]
+                   Product.status, Product.approval_status, Product.vendor_id]
     column_searchable_list = [Product.title, Product.sku]
     column_sortable_list = [Product.id, Product.title, Product.price, Product.created_at]
     form_excluded_columns = [Product.created_at, Product.updated_at]
@@ -120,7 +120,7 @@ class PaymentAdmin(ModelView, model=Payment):
 
 
 class AddressAdmin(ModelView, model=Address):
-    column_list = [Address.id, Address.user_id, Address.type, Address.city, 
+    column_list = [Address.id, Address.user_id, Address.address_type, Address.city, 
                    Address.country, Address.is_default]
     form_excluded_columns = [Address.created_at]
     
@@ -152,8 +152,8 @@ class ProductImageAdmin(ModelView, model=ProductImage):
 
 
 class CartItemAdmin(ModelView, model=CartItem):
-    column_list = [CartItem.id, CartItem.user_id, CartItem.product_id, 
-                   CartItem.quantity, CartItem.created_at]
+    column_list = [CartItem.id, CartItem.cart_id, CartItem.product_id, CartItem.variant_id,
+                   CartItem.quantity, CartItem.unit_price, CartItem.created_at]
     form_excluded_columns = [CartItem.created_at, CartItem.updated_at]
     
     name = "Cart Item"
@@ -171,8 +171,8 @@ class WishlistAdmin(ModelView, model=Wishlist):
 
 
 class CouponAdmin(ModelView, model=Coupon):
-    column_list = [Coupon.id, Coupon.code, Coupon.type, Coupon.value, 
-                   Coupon.is_active, Coupon.expires_at]
+    column_list = [Coupon.id, Coupon.code, Coupon.discount_type, Coupon.discount_value, 
+                   Coupon.is_active, Coupon.valid_until]
     column_searchable_list = [Coupon.code]
     form_excluded_columns = [Coupon.created_at]
     

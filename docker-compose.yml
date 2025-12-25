@@ -1,28 +1,220 @@
+version: '3.8'
+
 services:
-  # PostgreSQL Database
+  # ==========================================
+  # PostgreSQL Database (Multi-Database Setup)
+  # ==========================================
   postgres:
     image: postgres:15-alpine
     container_name: ecommerce_postgres
     restart: always
     environment:
-      POSTGRES_DB: ${DB_NAME:-ecommerce_db}
-      POSTGRES_USER: ${DB_USER:-admin}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin}
+      POSTGRES_USER: ${POSTGRES_USER:-ecommerce_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_this_secure_password_123!}
+      POSTGRES_DB: ${POSTGRES_DB:-ecommerce_main}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/init-microservices-complete.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-admin} -d ${DB_NAME:-ecommerce_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ecommerce_admin}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - ecommerce_network
 
+  # ==========================================
+  # Redis Cache (for sessions, caching)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce_redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secure_pass_678!}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce_network
+
+  # ==========================================
+  # RabbitMQ Message Queue
+  # ==========================================
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ecommerce_rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-ecommerce_mq}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rabbitmq_secure_pass_901!}
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # Management UI
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - ecommerce_network
+
+  # ==========================================
+  # Authentication Service
+  # ==========================================
+  auth-service:
+    build:
+      context: ./services
+      dockerfile: auth/Dockerfile
+    container_name: ecommerce_auth
+    restart: always
+    ports:
+      - "${AUTH_PORT:-8002}:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${AUTH_DB_NAME:-auth_db}
+      DB_USER: ${AUTH_DB_USER:-auth_service}
+      DB_PASSWORD: ${AUTH_DB_PASSWORD:-auth_secure_pass_345!}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secure_pass_678!}
+
+      # JWT
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-your-super-secret-jwt-key-change-this-in-production}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      JWT_REFRESH_TOKEN_EXPIRE_DAYS: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-7}
+
+      # App Settings
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+    volumes:
+      - ./services/auth/app:/app
+      - ./services/shared:/app/services/shared
+    networks:
+      - ecommerce_network
+
+  # ==========================================
+  # Product Service
+  # ==========================================
+  product-service:
+    build:
+      context: ./services
+      dockerfile: product/Dockerfile
+    container_name: ecommerce_product
+    restart: always
+    ports:
+      - "${PRODUCT_PORT:-8003}:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${PRODUCT_DB_NAME:-product_db}
+      DB_USER: ${PRODUCT_DB_USER:-product_service}
+      DB_PASSWORD: ${PRODUCT_DB_PASSWORD:-product_secure_pass_789!}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secure_pass_678!}
+
+      # RabbitMQ
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-ecommerce_mq}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-rabbitmq_secure_pass_901!}
+
+      # Auth Service
+      AUTH_SERVICE_URL: http://auth-service:8002
+
+      # App Settings
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+    volumes:
+      - ./services/product/app:/app
+      - ./services/shared:/app/services/shared
+    networks:
+      - ecommerce_network
+
+  # ==========================================
+  # Order Service
+  # ==========================================
+  order-service:
+    build:
+      context: ./services
+      dockerfile: order/Dockerfile
+    container_name: ecommerce_order
+    restart: always
+    ports:
+      - "${ORDER_PORT:-8004}:8004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${ORDER_DB_NAME:-order_db}
+      DB_USER: ${ORDER_DB_USER:-order_service}
+      DB_PASSWORD: ${ORDER_DB_PASSWORD:-order_secure_pass_012!}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secure_pass_678!}
+
+      # RabbitMQ
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-ecommerce_mq}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-rabbitmq_secure_pass_901!}
+
+      # Other Services
+      AUTH_SERVICE_URL: http://auth-service:8002
+      PRODUCT_SERVICE_URL: http://product-service:8003
+
+      # Payment Gateway
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_your_key_here}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_your_webhook_secret}
+
+      # App Settings
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+    volumes:
+      - ./services/order/app:/app
+      - ./services/shared:/app/services/shared
+    networks:
+      - ecommerce_network
+
+  # ==========================================
   # Admin Dashboard Service
+  # ==========================================
   admin:
     build:
       context: ./services
@@ -30,47 +222,62 @@ services:
     container_name: ecommerce_admin
     restart: always
     ports:
-      - "8000:8000"
+      - "${ADMIN_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
     environment:
+      # Admin DB (for audit logs, notifications)
       DB_HOST: postgres
-      DB_USER: ${DB_USER:-admin}
-      DB_PASSWORD: ${DB_PASSWORD:-admin}
-      DB_NAME: ${DB_NAME:-ecommerce_db}
       DB_PORT: 5432
+      DB_NAME: ${ADMIN_DB_NAME:-admin_db}
+      DB_USER: ${ADMIN_DB_USER:-admin_service}
+      DB_PASSWORD: ${ADMIN_DB_PASSWORD:-admin_secure_pass_456!}
+
+      # Read access to other databases
+      AUTH_DB_NAME: ${AUTH_DB_NAME:-auth_db}
+      PRODUCT_DB_NAME: ${PRODUCT_DB_NAME:-product_db}
+      ORDER_DB_NAME: ${ORDER_DB_NAME:-order_db}
+
+      # Other Services
+      AUTH_SERVICE_URL: http://auth-service:8002
+      PRODUCT_SERVICE_URL: http://product-service:8003
+      ORDER_SERVICE_URL: http://order-service:8004
+
+      # App Settings
+      ENVIRONMENT: ${ENVIRONMENT:-development}
     volumes:
       - ./services/admin/app:/app
       - ./services/shared:/app/services/shared
     networks:
       - ecommerce_network
 
-  # API Service
-  api:
+  # ==========================================
+  # API Gateway (Nginx)
+  # ==========================================
+  api-gateway:
     build:
-      context: ./services
-      dockerfile: api/Dockerfile
-    container_name: ecommerce_api
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: ecommerce_gateway
     restart: always
     ports:
-      - "8001:8001"
+      - "80:80"
+      - "443:443"
     depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      DB_HOST: postgres
-      DB_USER: ${DB_USER:-admin}
-      DB_PASSWORD: ${DB_PASSWORD:-admin}
-      DB_NAME: ${DB_NAME:-ecommerce_db}
-      DB_PORT: 5432
+      - auth-service
+      - product-service
+      - order-service
+      - admin
     volumes:
-      - ./services/api/app:/app
-      - ./services/shared:/app/services/shared
+      - ./services/gateway/nginx.conf:/etc/nginx/nginx.conf
+      - ./services/gateway/ssl:/etc/nginx/ssl
     networks:
       - ecommerce_network
 
+  # ==========================================
   # Adminer - Database Management Tool
+  # ==========================================
   adminer:
     image: adminer:latest
     container_name: ecommerce_adminer
@@ -81,14 +288,20 @@ services:
       - postgres
     environment:
       ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: nette
     networks:
       - ecommerce_network
 
+# ==========================================
+# VOLUMES
+# ==========================================
 volumes:
   postgres_data:
     driver: local
 
+# ==========================================
+# NETWORKS
+# ==========================================
 networks:
   ecommerce_network:
     driver: bridge
-

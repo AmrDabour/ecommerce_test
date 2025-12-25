@@ -1,12 +1,35 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
 venv/
 ENV/
+env/
 .venv
 pip-log.txt
 pip-delete-this-directory.txt
@@ -17,24 +40,6 @@ pip-delete-this-directory.txt
 *.swp
 *.swo
 *~
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Docker
-docker-compose.override.yml
-
-# Logs
-*.log
-logs/
-
-# Database
-*.sql.gz
-*.dump
-
-# OS
 .DS_Store
 Thumbs.db
 
@@ -42,9 +47,36 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# Build
-dist/
-build/
-*.egg-info/
+# Logs
+*.log
+logs/
+*.log.*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.sql.gz
+*.dump
+postgres_data/
+
+# Docker
+docker-compose.override.yml
+
+# Secrets
+secrets/
+*.pem
+*.key
+*.crt
+credentials.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
 

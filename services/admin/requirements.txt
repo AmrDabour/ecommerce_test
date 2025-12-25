@@ -6,4 +6,5 @@ sqladmin==0.16.1
 wtforms==3.1.1
 passlib==1.7.4
 bcrypt==4.2.1
+httpx==0.25.2
 

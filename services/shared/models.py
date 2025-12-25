@@ -27,11 +27,10 @@ class User(Base):
     updated_at = Column(TIMESTAMP, server_default=func.now())
     
     # Relationships
-    products = relationship("Product", back_populates="seller", foreign_keys="Product.seller_id")
+    products = relationship("Product", back_populates="vendor", foreign_keys="Product.vendor_id")
     orders = relationship("Order", back_populates="buyer")
     reviews = relationship("Review", back_populates="user")
     addresses = relationship("Address", back_populates="user")
-    cart_items = relationship("CartItem", back_populates="user")
     wishlist = relationship("Wishlist", back_populates="user")
     sent_messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
     received_messages = relationship("Message", foreign_keys="Message.receiver_id", back_populates="receiver")
@@ -62,37 +61,75 @@ class Category(Base):
         return f"{self.name}"
 
 
-class Product(Base):
-    __tablename__ = 'products'
+class Brand(Base):
+    __tablename__ = 'brands'
     
     id = Column(Integer, primary_key=True)
-    seller_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    category_id = Column(Integer, ForeignKey('categories.id'))
-    title = Column(String(255), nullable=False)
+    name = Column(String(255), unique=True, nullable=False)
+    slug = Column(String(255), unique=True, nullable=False)
     description = Column(Text)
-    price = Column(DECIMAL(10, 2), nullable=False)
-    compare_at_price = Column(DECIMAL(10, 2))
-    cost_per_item = Column(DECIMAL(10, 2))
-    sku = Column(String(100))
-    barcode = Column(String(100))
-    brand = Column(String(100))
-    condition = Column(String(20))
-    quantity = Column(Integer, default=0)
-    weight = Column(DECIMAL(10, 2))
-    dimensions_length = Column(DECIMAL(10, 2))
-    dimensions_width = Column(DECIMAL(10, 2))
-    dimensions_height = Column(DECIMAL(10, 2))
-    views_count = Column(Integer, default=0)
-    favorites_count = Column(Integer, default=0)
-    status = Column(String(20), default='draft')
-    approval_status = Column(String(20), default='pending')
-    rejection_reason = Column(Text)
+    logo = Column(String(100))
+    website = Column(String(200))
+    is_active = Column(Boolean, default=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now())
     
     # Relationships
-    seller = relationship("User", back_populates="products", foreign_keys=[seller_id])
+    products = relationship("Product", back_populates="brand")
+    
+    def __repr__(self):
+        return f"{self.name}"
+
+
+class Product(Base):
+    __tablename__ = 'products'
+    
+    id = Column(Integer, primary_key=True)
+    vendor_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    category_id = Column(Integer, ForeignKey('categories.id'))
+    brand_id = Column(Integer, ForeignKey('brands.id'))
+    title = Column(String(255), nullable=False)
+    slug = Column(String(550))
+    description = Column(Text)
+    short_description = Column(Text)
+    price = Column(DECIMAL(10, 2), nullable=False)
+    compare_at_price = Column(DECIMAL(10, 2))
+    cost_per_item = Column(DECIMAL(10, 2))
+    quantity = Column(Integer, default=0)
+    low_stock_threshold = Column(Integer, default=5)
+    track_inventory = Column(Boolean, default=True)
+    allow_backorders = Column(Boolean, default=False)
+    sku = Column(String(100))
+    barcode = Column(String(100))
+    condition = Column(String(20))
+    status = Column(String(20), default='draft')
+    approval_status = Column(String(20), default='pending')
+    rejection_reason = Column(Text)
+    weight = Column(DECIMAL(10, 2))
+    length = Column(DECIMAL(10, 2))
+    width = Column(DECIMAL(10, 2))
+    height = Column(DECIMAL(10, 2))
+    meta_title = Column(String(255))
+    meta_description = Column(Text)
+    meta_keywords = Column(String(500))
+    is_featured = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    view_count = Column(Integer, default=0)
+    views_count = Column(Integer, default=0)
+    sales_count = Column(Integer, default=0)
+    favorites_count = Column(Integer, default=0)
+    published_at = Column(TIMESTAMP)
+    approved_at = Column(TIMESTAMP)
+    approved_by_id = Column(Integer, ForeignKey('users.id'))
+    submitted_for_approval_at = Column(TIMESTAMP)
+    deleted_at = Column(TIMESTAMP)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now())
+    
+    # Relationships
+    vendor = relationship("User", back_populates="products", foreign_keys=[vendor_id])
     category = relationship("Category", back_populates="products")
+    brand = relationship("Brand", back_populates="products")
     images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
     order_items = relationship("OrderItem", back_populates="product")
     reviews = relationship("Review", back_populates="product")
@@ -159,7 +196,7 @@ class OrderItem(Base):
     id = Column(Integer, primary_key=True)
     order_id = Column(Integer, ForeignKey('orders.id'), nullable=False)
     product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
-    seller_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    vendor_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     title = Column(String(255), nullable=False)
     quantity = Column(Integer, nullable=False)
     price = Column(DECIMAL(10, 2), nullable=False)
@@ -169,7 +206,7 @@ class OrderItem(Base):
     # Relationships
     order = relationship("Order", back_populates="order_items")
     product = relationship("Product", back_populates="order_items")
-    seller = relationship("User", foreign_keys=[seller_id])
+    vendor = relationship("User", foreign_keys=[vendor_id])
     
     def __repr__(self):
         return f"{self.title} x{self.quantity}"
@@ -200,7 +237,7 @@ class Address(Base):
     
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    type = Column(String(20), nullable=False)  # 'shipping' or 'billing'
+    address_type = Column(String(20), nullable=False)  # 'shipping' or 'billing'
     first_name = Column(String(100))
     last_name = Column(String(100))
     company = Column(String(100))
@@ -246,21 +283,36 @@ class Review(Base):
     
     def __repr__(self):
         return f"{self.rating}★ Review by User #{self.user_id}"
-    order = relationship("Order")
+
+
+class Cart(Base):
+    __tablename__ = 'carts'
+    
+    customer_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    updated_at = Column(TIMESTAMP, server_default=func.now())
+    
+    # Relationships
+    items = relationship("CartItem", back_populates="cart")
+    
+    def __repr__(self):
+        return f"Cart for Customer #{self.customer_id}"
 
 
 class CartItem(Base):
     __tablename__ = 'cart_items'
     
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    cart_id = Column(Integer, ForeignKey('carts.customer_id'), nullable=False)
     product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
-    quantity = Column(Integer, nullable=False)
+    variant_id = Column(Integer, ForeignKey('product_variants.id'))
+    quantity = Column(Integer, nullable=False, default=1)
+    unit_price = Column(DECIMAL(12, 2), nullable=False)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now())
     
     # Relationships
-    user = relationship("User", back_populates="cart_items")
+    cart = relationship("Cart", back_populates="items")
     product = relationship("Product", back_populates="cart_items")
     
     def __repr__(self):
@@ -308,19 +360,24 @@ class Coupon(Base):
     
     id = Column(Integer, primary_key=True)
     code = Column(String(50), unique=True, nullable=False)
-    type = Column(String(20), nullable=False)  # 'percentage' or 'fixed'
-    value = Column(DECIMAL(10, 2), nullable=False)
+    name = Column(String(255))
+    description = Column(Text)
+    discount_type = Column(String(20), nullable=False)  # 'percentage' or 'fixed'
+    discount_value = Column(DECIMAL(10, 2), nullable=False)
     min_purchase_amount = Column(DECIMAL(10, 2))
     max_discount_amount = Column(DECIMAL(10, 2))
     usage_limit = Column(Integer)
     used_count = Column(Integer, default=0)
-    starts_at = Column(TIMESTAMP)
-    expires_at = Column(TIMESTAMP)
+    max_uses_per_customer = Column(Integer, default=1)
+    current_uses = Column(Integer, default=0)
+    valid_from = Column(TIMESTAMP)
+    valid_until = Column(TIMESTAMP)
     is_active = Column(Boolean, default=True)
+    created_by_id = Column(Integer, ForeignKey('users.id'))
     created_at = Column(TIMESTAMP, server_default=func.now())
     
     def __repr__(self):
-        return f"{self.code} ({self.value} {self.type})"
+        return f"{self.code} ({self.discount_value} {self.discount_type})"
 
 
 class Notification(Base):
